@@ -2,28 +2,28 @@ import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
-# principal page configuration
+# Main page configuration
 st.set_page_config(
     page_title="Australian Languages Explorer", layout="wide"
 )
 
-# CSS style
+# CSS Styles
 st.markdown(
     """
     <style>
     @import url('https://googleapis.com/css2?family=Federo&family=Lora:ital,wght@0,400..700;1,400..700&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Platypi:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet');
 
-    /* Appliquer la police */
+    /* Apply font */
     html, body, [class*="css"] {
         font-family: 'Platypi', sans-serif !important;
     }
 
-    /* Fond général de l'application */
+    /* General application background */
     .stApp {
         background-color: #f8fafc !important;
     }
     
-    /* Style des onglets */
+    /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 12px;
     }
@@ -47,7 +47,7 @@ st.markdown(
 )
 
 
-# loading the data
+# Loading the data
 @st.cache_data
 def load_data():
     return pd.read_csv("language_learning_data.csv")
@@ -55,35 +55,35 @@ def load_data():
 
 df = load_data()
 
-# HEADER
-st.title("Australian Languages Explorer & Learning Tool🐨💬")
+# Header
+st.title("Australian Languages Explorer & Learning Tool 🐨💬")
 st.markdown(
     "Explore the cultural richness and diversity of Aboriginal and Torres Strait Islander languages."
 )
 st.markdown("---")
 
-# views creation
+# Create views
 tab_explorer, tab_quiz, tab_stats = st.tabs([
     "📖 Language Explorer",
     "🧠 Quiz & Learning",
     "📊 Analytics & Map",
 ])
 
-#------------------------------------------------------------------------------
-# VIEW 1 : language cards
+# -----------------------------------------------------------------------------
+# VIEW 1: Language cards
 with tab_explorer:
     st.header("Language Explorer by Region")
     st.write(
         "Click on one of the regions below to filter the corresponding languages:"
     )
 
-    # Initialisation of the filter
+    # Initialize region filter state
     if "selected_region" not in st.session_state:
-        st.session_state.selected_region = "Toutes"
+        st.session_state.selected_region = "All"
 
-    regions = ["Toutes", "WA", "QLD", "NT", "NSW", "VIC", "SA", "TAS", "TSI"]
+    regions = ["All", "WA", "QLD", "NT", "NSW", "VIC", "SA", "TAS", "TSI"]
 
-    # region filter buttons
+    # Region filter buttons
     st.markdown("##### 🌍 Quick geographic filters")
     cols_regions = st.columns(len(regions))
     for i, reg in enumerate(regions):
@@ -94,12 +94,12 @@ with tab_explorer:
             
             if st.button(reg, use_container_width=True, type=btn_type):
                 st.session_state.selected_region = reg
-                st.rerun()  # reload trigger
+                st.rerun()  # Reload trigger
 
     st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
-        available_statuses = ["Tous"] + sorted(df["statut"].dropna().unique())
+        available_statuses = ["All"] + sorted(df["statut"].dropna().unique())
         status_filter = st.selectbox(
             "Filter by Documentation Status:", available_statuses
         )
@@ -108,13 +108,13 @@ with tab_explorer:
             "Search by language name or AUSTLANG code:"
         )
 
-    # cumulated filters
+    # Cumulative filters
     filtered_df = df.copy()
-    if st.session_state.selected_region != "Toutes":
+    if st.session_state.selected_region != "All":
         filtered_df = filtered_df[
             filtered_df["territoire"] == st.session_state.selected_region
         ]
-    if status_filter != "Tous":
+    if status_filter != "All":
         filtered_df = filtered_df[filtered_df["statut"] == status_filter]
     if text_search:
         filtered_df = filtered_df[
@@ -129,20 +129,20 @@ with tab_explorer:
         f" **{len(filtered_df)}** languages found."
     )
 
-    # create columns for the card
+    # Create columns for the cards
     cols_per_row = 3
     rows = [
         filtered_df.iloc[i : i + cols_per_row]
         for i in range(0, len(filtered_df), cols_per_row)
     ]
 
-    # create a grid for the cards
+    # Create a grid for the cards
     st.markdown("##### 📚 Matching languages list")
     for row_df in rows:
         cols = st.columns(cols_per_row)
         for idx, (_, row) in enumerate(row_df.iterrows()):
             with cols[idx]:
-                # st.container(border=True) isolate each element in a box
+                # st.container(border=True) isolates each element in a box
                 with st.container(border=True):
                     badge_color = "🟢" if row["statut"] == "Confirmed" else "🟠"
                     st.markdown(f"### 🗣️ {row['nom_langue']}")
@@ -156,13 +156,13 @@ with tab_explorer:
                         desc = desc[:130] + "..."
                     st.write(desc)
 
-                    # st.expander create an expandable box to see more details
+                    # st.expander creates an expandable box to see more details
                     with st.expander("View more details"):
                         st.markdown(f"**Location:** {row['localisation']}")
                         st.markdown(f"**Full description:** {row['description']}")
 
-#--------------------------------------------------------------------
-# VIEW 2 : Quiz
+# --------------------------------------------------------------------
+# VIEW 2: Quiz
 with tab_quiz:
     st.header("Quiz Mode: Test Your Knowledge!")
     st.write(
@@ -170,7 +170,7 @@ with tab_quiz:
         " region for each proposed language."
     )
 
-    # quiz initialisation
+    # Initialize quiz session state
     if "quiz_language" not in st.session_state:
         st.session_state.quiz_language = df.sample(1).iloc[0]
         st.session_state.score = 0
@@ -199,7 +199,7 @@ with tab_quiz:
     st.markdown("##### 🧭 Region choice")
     for i, reg in enumerate(quiz_regions):
         with quiz_cols[i % 4]:
-            # use_container_width=True makes the buttons the same size and use all the page width
+            # use_container_width=True makes buttons uniform and span the width
             if st.button(reg, use_container_width=True, key=f"btn_reg_{reg}"):
                 if reg == current_language["territoire"]:
                     st.session_state.score += 1
@@ -242,7 +242,7 @@ with tab_quiz:
     st.metric("🏆 Your Current Score", f"{st.session_state.score} points")
 
 # ---------------------------------------------------------------------------
-# VIEW 3 : Stats & Map
+# VIEW 3: Analytics & Map
 with tab_stats:
     st.header("Statistical Analysis and Cartography")
 
@@ -260,12 +260,12 @@ with tab_stats:
     # Filter rows with valid GPS coordinates for the map
     map_df = df.dropna(subset=["latitude", "longitude"])
 
-    # put australia in the center of the map
+    # Center the map view on Australia
     view_state = pdk.ViewState(
         latitude=-25.2744, longitude=133.7751, zoom=3.5, pitch=0
     )
 
-    # layer to show the points
+    # Scatterplot layer for language locations
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=map_df,
@@ -276,7 +276,7 @@ with tab_stats:
         auto_highlight=True,
     )
 
-    # put the layers together
+    # Assemble Deck instance
     r = pdk.Deck(
         layers=[layer],
         initial_view_state=view_state,
@@ -289,7 +289,7 @@ with tab_stats:
         },
     )
 
-    # show the pydeck in streamlit
+    # Render Pydeck chart in Streamlit
     st.pydeck_chart(r)
     st.write(
         f"Displaying {len(map_df)} geolocated languages on the map of"
